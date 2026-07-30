@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-class version:
+
+class Version:
     def __init__(self, str_version: str) -> None:
         try:
             arr_version = [int(_) for _ in str_version.split('.')]
@@ -11,8 +12,78 @@ class version:
         self.minor  = arr_version[1] if len(arr_version) > 1 else 0
         self.hotfix = arr_version[2] if len(arr_version) > 2 else 0
 
+    def __lt__(self, other) -> bool:
+        return (
+            self.major,
+            self.minor,
+            self.hotfix
+        ) < (
+            other.major,
+            other.minor,
+            other.hotfix
+        )
+    def __gt__(self, other) -> bool:
+        return (
+            self.major,
+            self.minor,
+            self.hotfix
+        ) < (
+            other.major,
+            other.minor,
+            other.hotfix
+        )
+    def __le__(self, other) -> bool:
+        return not(self.__lt__(other))
+    def __ge__(self, other) -> bool:
+        return not(self.__gt__(other))
+    def __eq__(self, other) -> bool:
+        return  (
+            self.major,
+            self.minor,
+            self.hotfix
+        ) == (
+            other.major,
+            other.minor,
+            other.hotfix
+        )
+    def __ne__(self, other) -> bool:
+        return not(self.__eq__(other))
+
 """# testing framework
-case_alpha = version("1.2.3")
-case_beta  = version("3.4")
-case_gamma = version("")
+case_alpha = Version("1.2.3")
+case_beta  = Version("3.4")
+case_gamma = Version("")
+
+print(case_alpha == Version("1.2.3"))
+print(Version("1") == Version("1.0.0"))
+print(Version("2") < Version("0.9.9"))
 """
+
+class AABB_BoundingBox:
+
+    def __init__(self, corner1, corner2) -> None:
+        self._corner1 = corner1
+        self._corner2 = corner2
+        self.update()
+
+    def update(self) -> None:
+        self.center = (self.corner1+self.corner2)*0.5
+
+    # getter and setters to make sure updating the AABB updates associated data
+    @property
+    def corner1(self):
+        return self._corner1
+
+    @corner1.setter
+    def corner1(self, value):
+        self.corner1 = value
+        self.update()
+
+    @property
+    def corner2(self):
+        return self._corner2
+
+    @corner2.setter
+    def corner2(self, value):
+        self.corner2 = value
+        self.update()
