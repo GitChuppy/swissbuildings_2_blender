@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 
+# classes
+
 class Version:
     def __init__(self, str_version: str) -> None:
         try:
@@ -87,3 +89,14 @@ class AABB_BoundingBox:
     def corner2(self, value):
         self.corner2 = value
         self.update()
+
+# functions
+def ns_lookup(identifier: str, namespace: dict | None = None) -> str:
+
+    if ':' not in identifier:
+        return identifier
+    else:
+        if namespace is None:
+            raise ValueError('namespace dictionary required for identifiers with a colon (:)')
+        prefix, local = identifier.split(':')
+        return "{" + f"{namespace[prefix]}" + "}" + f"{local}"
