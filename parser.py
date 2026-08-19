@@ -1,18 +1,30 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+from time import perf_counter as pfc
 
 import numpy as np
 
 # etree is a compiled package that has no stubs shipped with it
 from lxml import etree  # pyright: ignore[reportAttributeAccessIssue]
 
-from tooling import AABB_BoundingBox, Building, Version, nsl
+from tooling import AABB_BoundingBox, Building, Implicit_Mapping, Version, nsl
 
 
 class SwissBUILDINGS3d_Parser:
-
+    """
+    Parser Implementation for the SWISSBuildings3D dataset of swisstopo as an intermediate to blender
+    """
     version: dict[str, Version]
 
     def __init__(self, filepath: str) -> None:
+        """
+        Parses metadata and as a next step all the further data
+        `Args`:
+            - filepath:
+                A path to a citygml `.gml` file.
+                May be absolute OR relative.
+                Python filepath restrictions persist, spaces in paths may cause an error.
+        """
 
         # parse xml database
         self._root = (root := etree.parse(filepath).getroot())
@@ -45,29 +57,42 @@ class SwissBUILDINGS3d_Parser:
                                                         .text.split(' '), dtype=np.float32
                                                 )
                                         )),
-                "boundingBox"       :   AABB_BoundingBox(_lower_corner, _upper_corner)
+                "bounding_Box"      :   AABB_BoundingBox(_lower_corner, _upper_corner)
             }
 
     def parseBuildings(self):
         """
         Loads all buildings into a datastructure.
         """
+
+        start = pfc()
+
         version = self._version
         root = self._root
         ns = self._ns
 
         if Version("3.0") <= version["swisstopo"]:
-            self.buildings: dict[str, Building] = {
+            self.building: dict[str, Building] = {
                 _.find(nsl('bldg:Building', ns)).attrib[nsl('gml:id', ns)] : Building(building=_, ns=ns, version=version["swisstopo"]) # pass object and namespace, generate all the surface patches data inside the class...
                 for _ in root.findall(nsl('core:cityObjectMember', ns))
             }
+            self.buildings = Implicit_Mapping(self.building)
 
-    def transfer (self) -> int:
-        return 0
+        print(f"Mapping done in {pfc()-start}s")
 
 if __name__ == '__main__':
+
+    import argparse
+
+    parser = argparse.ArgumentParser(
+                        prog='Swisstopo SWISSBuildings GML parser',
+                        description='DISCLAIMER: This importer is not associated with Swisstopo in any way, shape or form.')
+
+    parser.add_argument('-f', '--filename', required=True, help='requires a Swisstopo SWISSBuildings (or compatible) GML file.')
+
+    args = parser.parse_args()
+
     # Testset
-    hinterrhein = SwissBUILDINGS3d_Parser(filepath="demo_Hinterrhein.gml")
+    hinterrhein = SwissBUILDINGS3d_Parser(filepath=args.filename)
     hinterrhein.parseBuildings()
-    #print(list(list(hinterrhein.buildings.values())[_].component for _ in range(20)))
     print("finished")

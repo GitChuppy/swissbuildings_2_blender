@@ -3,6 +3,7 @@
 
 import numpy as np
 from lxml import etree  # pyright: ignore[reportAttributeAccessIssue]
+from numpy.typing import NDArray
 
 
 # classes
@@ -66,13 +67,13 @@ class Version:
 
 class AABB_BoundingBox:
 
-    def __init__(self, corner1, corner2) -> None:
-        self._corner1 = corner1
-        self._corner2 = corner2
+    def __init__(self, corner1: NDArray[np.float32], corner2: NDArray[np.float32]) -> None:
+        self._corner1: NDArray[np.float32] = corner1
+        self._corner2: NDArray[np.float32] = corner2
         self.update()
 
     def update(self) -> None:
-        self.center = (self.corner1+self.corner2)*0.5
+        self.center: NDArray[np.float32] = (np.add(self._corner1, self._corner2)*0.5).astype(np.float32)
 
     # getter and setters to make sure updating the AABB updates associated data
     @property
@@ -81,7 +82,7 @@ class AABB_BoundingBox:
 
     @corner1.setter
     def corner1(self, value):
-        self.corner1 = value
+        self._corner1 = value
         self.update()
 
     @property
@@ -90,8 +91,85 @@ class AABB_BoundingBox:
 
     @corner2.setter
     def corner2(self, value):
-        self.corner2 = value
+        self._corner2 = value
         self.update()
+
+class Implicit_Mapping:
+    __slots__ = ("_item",)
+
+    def __init__(self, items):
+        object.__setattr__(self, "_item", items)
+
+    def _items(self):
+        if hasattr(self._item, "values"):
+            return self._item.values()
+        return self._item
+
+    def __iter__(self):
+        return iter(self._items())
+
+    def __getattr__(self, name):
+        #numpy and other packages may get a too eager with an __array_struct__ that just gets accepted all willy nilly. This ends here
+        if name.startswith("__") and name.endswith("__"):
+                raise AttributeError(name)
+
+        return Implicit_Mapping(
+            [getattr(item, name) for item in self._items()]
+        )
+
+    def flatten(self):
+        def flatten_items(items):
+            for item in items:
+                if isinstance(item, (Implicit_Mapping, list, tuple)):
+                    yield from flatten_items(item)
+                else:
+                    yield item
+
+        return list(flatten_items(self._items()))
+
+    def __setattr__(self, name, value):
+        items = list(self._items())
+
+        if isinstance(value, Implicit_Mapping):
+            values = list(value._items())
+
+            if len(items) != len(values):
+                raise ValueError(
+                    f"Cannot assign {len(values)} values to {len(items)} items"
+                )
+
+            for item, item_value in zip(items, values):
+                setattr(item, name, item_value)
+
+        else:
+            for item in items:
+                setattr(item, name, value)
+
+    def __repr__(self):
+        return repr(list(self))
+
+    def __str__(self):
+        return str(list(self))
+
+    def __add__(self, other):
+        return Implicit_Mapping(
+            [item + other for item in self._items()]
+        )
+
+    def __sub__(self, other):
+        return Implicit_Mapping(
+            [item - other for item in self._items()]
+        )
+
+    def __mul__(self, other):
+        return Implicit_Mapping(
+            [item * other for item in self._items()]
+        )
+
+    def __truediv__(self, other):
+        return Implicit_Mapping(
+            [item / other for item in self._items()]
+        )
 
 class Building:
 
@@ -101,77 +179,73 @@ class Building:
 
             class Vertex:
 
-                def __init__(self, version: Version, vertices: list[float]) -> None:
+                def __init__(self, version: Version, vertices: NDArray[np.float32]) -> None:
 
                     if Version("3.0") <= version:
                         # Ensure we have exactly 3 coordinates, padding with 0.0 if necessary
-                        self._coords: list[float] = (vertices + [0.0, 0.0, 0.0])[:3]
+                        self._coords: NDArray[np.float32] = np.asarray((vertices + [0.0, 0.0, 0.0])[:3], dtype=np.float32)
 
-                        # --- Individual Coordinates ---
-                        @property
-                        def x(self) -> float:
-                            return self._coords[0]
+                # --- Individual Coordinates ---
+                @property
+                def x(self) -> np.float32:
+                    return self._coords[0]
 
-                        @x.setter
-                        def x(self, value: float) -> None:
-                            self._coords[0] = value
+                @x.setter
+                def x(self, value: np.float32) -> None:
+                    self._coords[0] = value
 
-                        @property
-                        def y(self) -> float:
-                            return self._coords[1]
+                @property
+                def y(self) -> np.float32:
+                    return self._coords[1]
 
-                        @y.setter
-                        def y(self, value: float) -> None:
-                            self._coords[1] = value
+                @y.setter
+                def y(self, value: np.float32) -> None:
+                    self._coords[1] = value
 
-                        @property
-                        def z(self) -> float:
-                            return self._coords[2]
+                @property
+                def z(self) -> np.float32:
+                    return self._coords[2]
 
-                        @z.setter
-                        def z(self, value: float) -> None:
-                            self._coords[2] = value
+                @z.setter
+                def z(self, value: np.float32) -> None:
+                    self._coords[2] = value
 
-                        # --- Composed Coordinates (Bidirectional) ---
-                        @property
-                        def xy(self) -> tuple[float, float]:
-                            return (self._coords[0], self._coords[1])
+                # --- Composed Coordinates (Bidirectional) ---
+                @property
+                def xy(self) -> NDArray[np.float32]:
+                    return np.asarray((self._coords[0], self._coords[1]), dtype=np.float32)
 
-                        @xy.setter
-                        def xy(self, value: tuple[float, float]) -> None:
-                            self._coords[0], self._coords[1] = value
+                @xy.setter
+                def xy(self, value: NDArray[np.float32]) -> None:
+                    self._coords[0], self._coords[1] = value
 
-                        @property
-                        def yz(self) -> tuple[float, float]:
-                            return (self._coords[1], self._coords[2])
+                @property
+                def yz(self) -> NDArray[np.float32]:
+                    return np.asarray((self._coords[1], self._coords[2]), dtype=np.float32)
 
-                        @yz.setter
-                        def yz(self, value: tuple[float, float]) -> None:
-                            self._coords[1], self._coords[2] = value
+                @yz.setter
+                def yz(self, value: NDArray[np.float32]) -> None:
+                    self._coords[1], self._coords[2] = value
 
-                        @property
-                        def xz(self) -> tuple[float, float]:
-                            return (self._coords[0], self._coords[2])
+                @property
+                def xz(self) -> NDArray[np.float32]:
+                    return np.asarray((self._coords[0], self._coords[2]), dtype=np.float32)
 
-                        @xz.setter
-                        def xz(self, value: tuple[float, float]) -> None:
-                            self._coords[0], self._coords[2] = value
+                @xz.setter
+                def xz(self, value: NDArray[np.float32]) -> None:
+                    self._coords[0], self._coords[2] = value
 
-                        @property
-                        def xyz(self) -> tuple[float, float, float]:
-                            return tuple(self._coords)
+                @property
+                def xyz(self) -> NDArray[np.float32]:
+                    return np.asarray(self._coords, dtype=np.float32)
 
-                        @xyz.setter
-                        def xyz(self, value: tuple[float, float, float]) -> None:
-                            self._coords[:] = value # Update list in place
-
-                        # --- Optional: Expose the raw list if needed ---
-                        @property
-                        def coords(self) -> list[float]:
-                            return self._coords
+                @xyz.setter
+                def xyz(self, value: NDArray[np.float32]) -> None:
+                    self._coords[:] = value # Update list in place
 
             # end Vertex
             vertex: list[Vertex]
+            vertices: Implicit_Mapping
 
             def __init__(self, polygon: etree._Element, ns: dict[str | None, str], version: Version, dimension: int = 3) -> None:
 
@@ -189,13 +263,16 @@ class Building:
                     _arr_vertex_ring = _arr_vertex_ring.reshape((-1, dimension))
 
                     self.vertex = [
-                        self.Vertex(version=version, vertices=vertices)
+                        self.Vertex(version=version, vertices=np.asarray(vertices, dtype=np.float32))
                         for vertices in _arr_vertex_ring[:-1]
                     ]
+
+                self.vertices = Implicit_Mapping(self.vertex)
 
         # end Polygon
 
         face: dict[str, Polygon]
+        faces: Implicit_Mapping
 
         def __init__(self, surfaces: list[etree._Element], ns: dict[str | None, str], version: Version) -> None:
 
@@ -209,23 +286,41 @@ class Building:
                             for surface in surfaces
                             for patch in surface.findall('.//' + nsl('gml:Polygon', ns))
                         }
+
+            self.faces = Implicit_Mapping(self.face)
             # end Surface
 
     component: dict[str, Surface]
 
+    bounding_box: AABB_BoundingBox
+
     def __init__(self, building: etree._Element, ns: dict[str | None, str], version: Version) -> None:
 
         self.component = {}
+        self.components = Implicit_Mapping(self.component)
 
         if Version("3.0") <= version:
-            self.component['GroundSurface']  = self.Surface(building.findall('.//' + nsl('bldg:GroundSurface'   ,ns)), ns=ns, version=version)
-            self.component['WallSurface']    = self.Surface(building.findall('.//' + nsl('bldg:WallSurface'     ,ns)), ns=ns, version=version)
-            self.component['RoofSurface']    = self.Surface(building.findall('.//' + nsl('bldg:RoofSurface'     ,ns)), ns=ns, version=version)
+
+            for ground_type in ('GroundSurface', 'WallSurface', 'RoofSurface', 'lod2Solid'):
+                surface = building.findall('.//' + nsl(f"bldg:{ground_type}"   ,ns))
+                if surface:
+                    self.component[ground_type] = self.Surface(surface, ns=ns, version=version)
+
+            vertices = np.asarray(self.components.faces.vertices.xyz.flatten(), dtype=np.float32).reshape((-1,3))
+            self.bounding_box = AABB_BoundingBox(corner1=np.min(vertices, axis=0),
+                                                 corner2=np.max(vertices, axis=0))
+
+            self.components.faces.vertices.xyz -= self.bounding_box.center
 
 # end Building
 
 # functions
 def nsl(identifier: str, namespace: dict | None = None) -> str:
+    """
+    Tiny helper function: lxml doesnt allow for the namespace resolution of indices / keys (see `.attrib[]` modifier).
+    This function essentially emulates this, if only for a generic expression.
+    WARNING: Will ignore special prefixes like `.//`. If this is required, add them seperately before the nsl expression using the `+` operator.
+    """
 
     if ':' not in identifier:
         return identifier

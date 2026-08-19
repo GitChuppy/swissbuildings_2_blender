@@ -1,0 +1,22 @@
+[project]
+name = "citygml"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "chuppy", email = "noreply@safmod.ch" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "lxml>=6.1.2",
+    "numpy>=2.5.2",
+    "pip>=26.2.1",
+    "progressbar>=2.5",
+]
+
+[project.scripts]
+citygml = "citygml:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
