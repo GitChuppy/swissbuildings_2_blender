@@ -65,24 +65,41 @@ class SwissBUILDINGS3d_Parser:
         Loads all buildings into a datastructure.
         """
 
-        start = pfc()
-
         version = self._version
         root = self._root
         ns = self._ns
 
         if Version("3.0") <= version["swisstopo"]:
-            self.building: dict[str, Building] = {
-                _.find(nsl('bldg:Building', ns)).attrib[nsl('gml:id', ns)] : Building(building=_, ns=ns, version=version["swisstopo"]) # pass object and namespace, generate all the surface patches data inside the class...
-                for _ in root.findall(nsl('core:cityObjectMember', ns))
-            }
+
+            buildings = root.findall(nsl('core:cityObjectMember', ns))
+
+            self.building: dict[str, Building]
+
+            if has_progress:
+                self.building = {
+                    _.find(nsl('bldg:Building', ns)).attrib[nsl('gml:id', ns)] : Building(building=_, ns=ns, version=version["swisstopo"]) # pass object and namespace, generate all the surface patches data inside the class...
+                    for _ in tqdm.tqdm(buildings, total=len(buildings), desc='Mapping buildings')
+                }
+            else:
+                start = pfc()
+                self.building = {
+                    _.find(nsl('bldg:Building', ns)).attrib[nsl('gml:id', ns)] : Building(building=_, ns=ns, version=version["swisstopo"]) # pass object and namespace, generate all the surface patches data inside the class...
+                    for _ in buildings
+                }
+                print(f"Mapping done in {pfc()-start}s")
             self.buildings = Implicit_Mapping(self.building)
 
-        print(f"Mapping done in {pfc()-start}s")
+
 
 if __name__ == '__main__':
 
     import argparse
+    try:
+        import tqdm
+
+        has_progress = True
+    except ImportError:
+        print(f"{ImportError}: progressing without.")
 
     parser = argparse.ArgumentParser(
                         prog='Swisstopo SWISSBuildings GML parser',
@@ -95,4 +112,3 @@ if __name__ == '__main__':
     # Testset
     hinterrhein = SwissBUILDINGS3d_Parser(filepath=args.filename)
     hinterrhein.parseBuildings()
-    print("finished")

@@ -3,6 +3,15 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
+name = "blender-python-stubs"
+version = "5.1.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a0/2c/56cf551e0a86e898b6ee0f340c77876e29930ac8857b3d36e41023cbae9b/blender_python_stubs-5.1.0.3.tar.gz", hash = "sha256:5dbe84cb635dd858834b8befb797cd8a1a305836b4bca206a76fc5a866e93f3b", size = 672525, upload-time = "2026-05-12T15:02:21.398Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7a/cf/a4c6826ec11c4edd2854e2758691ced56c4db3cfaec50f442fcf9065b90b/blender_python_stubs-5.1.0.3-py3-none-any.whl", hash = "sha256:5ab8bfc378ba94daae3d849a5a5e1320dae9414090bdcc7725bf9920db0fcbde", size = 707131, upload-time = "2026-05-12T15:02:19.35Z" },
+]
+
+[[package]]
 name = "citygml"
 version = "0.1.0"
 source = { editable = "." }
@@ -10,7 +19,12 @@ dependencies = [
     { name = "lxml" },
     { name = "numpy" },
     { name = "pip" },
-    { name = "progressbar" },
+    { name = "tqdm" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "blender-python-stubs" },
 ]
 
 [package.metadata]
@@ -18,7 +32,19 @@ requires-dist = [
     { name = "lxml", specifier = ">=6.1.2" },
     { name = "numpy", specifier = ">=2.5.2" },
     { name = "pip", specifier = ">=26.2.1" },
-    { name = "progressbar", specifier = ">=2.5" },
+    { name = "tqdm", specifier = ">=4.70.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "blender-python-stubs", specifier = ">=5.1.0.3" }]
+
+[[package]]
+name = "colorama"
+version = "0.4.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44", size = 27697, upload-time = "2022-10-25T02:36:22.414Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
 ]
 
 [[package]]
@@ -156,7 +182,13 @@ wheels = [
 ]
 
 [[package]]
-name = "progressbar"
-version = "2.5"
+name = "tqdm"
+version = "4.70.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a3/a6/b8e451f6cff1c99b4747a2f7235aa904d2d49e8e1464e0b798272aa84358/progressbar-2.5.tar.gz", hash = "sha256:5d81cb529da2e223b53962afd6c8ca0f05c6670e40309a7219eacc36af9b6c63", size = 10046, upload-time = "2018-06-29T02:32:00.222Z" }
+dependencies = [
+    { name = "colorama", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/21/3b/6c24bec5be5e743ffd99576daa5cc077722fc7d5bbc00bd133fa0c698dc6/tqdm-4.70.0.tar.gz", hash = "sha256:55b0b0dbd97462d06ebee91e4dac24ed4d4702be82b24f07e6c1d27e08cea220", size = 795438, upload-time = "2026-07-27T11:33:15.271Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/1c/01bfd571a64e7f270e6bab5e33777debe0edc56759233ce84f27dec92d14/tqdm-4.70.0-py3-none-any.whl", hash = "sha256:7f585706bfddbdebf89daac705b2dfcc16890130727d3197ca62c732b4310953", size = 80184, upload-time = "2026-07-27T11:33:13.167Z" },
+]

@@ -11,7 +11,7 @@ dependencies = [
     "lxml>=6.1.2",
     "numpy>=2.5.2",
     "pip>=26.2.1",
-    "progressbar>=2.5",
+    "tqdm>=4.70.0",
 ]
 
 [project.scripts]
@@ -20,3 +20,13 @@ citygml = "citygml:main"
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "blender-python-stubs>=5.1.0.3",
+]
+
+[tool.basedpyright]
+# Point to the .venv created by uv
+venvPath = "."
+venv = ".venv"
