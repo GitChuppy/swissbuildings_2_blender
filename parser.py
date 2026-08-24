@@ -8,7 +8,7 @@ import numpy as np
 from lxml import etree
 
 from tooling import AABB_BoundingBox, Building, Version, nsl
-from Implicit_Mapping import Implicit_Mapping
+from implicit_mapping import Implicit_Mapping
 
 
 class SwissBUILDINGS3d_Parser:

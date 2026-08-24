@@ -2,7 +2,7 @@
 
 
 import numpy as np
-from Implicit_Mapping import Implicit_Mapping
+from implicit_mapping import Implicit_Mapping
 from lxml import etree
 from numpy.typing import NDArray
 
@@ -171,7 +171,7 @@ class Building:
 
             # end Vertex
             vertex: list[Vertex]
-            vertices: Implicit_Mapping
+            vertices: Implicit_Mapping[Vertex]
 
             def __init__(self, polygon: etree._Element, ns: dict[str | None, str], version: Version, dimension: int = 3) -> None:
 
@@ -198,7 +198,7 @@ class Building:
         # end Polygon
 
         face: dict[str, Polygon]
-        faces: Implicit_Mapping
+        faces: Implicit_Mapping[Polygon]
 
         def __init__(self, surfaces: list[etree._Element], ns: dict[str | None, str], version: Version) -> None:
 
