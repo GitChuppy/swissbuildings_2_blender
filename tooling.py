@@ -2,7 +2,8 @@
 
 
 import numpy as np
-from lxml import etree  # pyright: ignore[reportAttributeAccessIssue]
+from Implicit_Mapping import Implicit_Mapping
+from lxml import etree
 from numpy.typing import NDArray
 
 
@@ -14,12 +15,12 @@ class Version:
         except ValueError:
             raise ValueError("version string cannot be empty")
 
-        self.major  = arr_version[0]
-        self.minor  = arr_version[1] if len(arr_version) > 1 else 0
-        self.hotfix = arr_version[2] if len(arr_version) > 2 else 0
-        self._raw   = f"{self.major}.{self.minor}.{self.hotfix}"
+        self.major:     int = arr_version[0]
+        self.minor:     int = arr_version[1] if len(arr_version) > 1 else 0
+        self.hotfix:    int = arr_version[2] if len(arr_version) > 2 else 0
+        self._raw:      str = f"{self.major}.{self.minor}.{self.hotfix}"
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: Version) -> bool:
         return (
             self.major,
             self.minor,
@@ -29,7 +30,7 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __gt__(self, other) -> bool:
+    def __gt__(self, other: Version) -> bool:
         return (
             self.major,
             self.minor,
@@ -39,11 +40,11 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __le__(self, other) -> bool:
+    def __le__(self, other: Version) -> bool:
         return not(self.__gt__(other))
-    def __ge__(self, other) -> bool:
+    def __ge__(self, other: Version) -> bool:
         return not(self.__lt__(other))
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: Version) -> bool:
         return  (
             self.major,
             self.minor,
@@ -53,7 +54,7 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: Version) -> bool:
         return not(self.__eq__(other))
 
 # testing framework
@@ -81,7 +82,7 @@ class AABB_BoundingBox:
         return self._corner1
 
     @corner1.setter
-    def corner1(self, value):
+    def corner1(self, value: NDArray[np.float32]):
         self._corner1 = value
         self.update()
 
@@ -90,86 +91,11 @@ class AABB_BoundingBox:
         return self._corner2
 
     @corner2.setter
-    def corner2(self, value):
+    def corner2(self, value: NDArray[np.float32]):
         self._corner2 = value
         self.update()
 
-class Implicit_Mapping:
-    __slots__ = ("_item",)
 
-    def __init__(self, items):
-        object.__setattr__(self, "_item", items)
-
-    def _items(self):
-        if hasattr(self._item, "values"):
-            return self._item.values()
-        return self._item
-
-    def __iter__(self):
-        return iter(self._items())
-
-    def __getattr__(self, name):
-        #numpy and other packages may get a too eager with an __array_struct__ that just gets accepted all willy nilly. This ends here
-        if name.startswith("__") and name.endswith("__"):
-                raise AttributeError(name)
-
-        return Implicit_Mapping(
-            [getattr(item, name) for item in self._items()]
-        )
-
-    def flatten(self):
-        def flatten_items(items):
-            for item in items:
-                if isinstance(item, (Implicit_Mapping, list, tuple)):
-                    yield from flatten_items(item)
-                else:
-                    yield item
-
-        return list(flatten_items(self._items()))
-
-    def __setattr__(self, name, value):
-        items = list(self._items())
-
-        if isinstance(value, Implicit_Mapping):
-            values = list(value._items())
-
-            if len(items) != len(values):
-                raise ValueError(
-                    f"Cannot assign {len(values)} values to {len(items)} items"
-                )
-
-            for item, item_value in zip(items, values):
-                setattr(item, name, item_value)
-
-        else:
-            for item in items:
-                setattr(item, name, value)
-
-    def __repr__(self):
-        return repr(list(self))
-
-    def __str__(self):
-        return str(list(self))
-
-    def __add__(self, other):
-        return Implicit_Mapping(
-            [item + other for item in self._items()]
-        )
-
-    def __sub__(self, other):
-        return Implicit_Mapping(
-            [item - other for item in self._items()]
-        )
-
-    def __mul__(self, other):
-        return Implicit_Mapping(
-            [item * other for item in self._items()]
-        )
-
-    def __truediv__(self, other):
-        return Implicit_Mapping(
-            [item / other for item in self._items()]
-        )
 
 class Building:
 

@@ -2,13 +2,14 @@
 
 import bpy
 
-context = bpy.context
+from parser import SwissBUILDINGS3d_Parser
 
-def read_some_data(context: , filepath, use_some_setting):
+context: bpy.context
+
+def read_some_data(context, filepath: str, use_some_setting: str):
     print("running read_some_data...")
-    f = open(filepath, "r", encoding="utf-8")
-    data = f.read()
-    f.close()
+
+    data = SwissBUILDINGS3d_Parser(filepath)
 
     # Would normally load the data here.
     print(data)
@@ -25,11 +26,11 @@ from bpy_extras.io_utils import ImportHelper
 
 class ImportSomeData(Operator, ImportHelper):
     """Load a SWISSBuildings file."""
-    bl_idname: str = "import_gml.swissbuildings"  # important since its how bpy.ops.import_test.some_data is constructed
-    bl_label: str = "Import SWISSBuildings data"
+    bl_idname: str = "import_gml.swissbuildings"  # important since its how bpy.ops.import_test.some_data is constructed  # pyright: ignore[reportUnusedVariable]
+    bl_label: str = "Import SWISSBuildings data"  # pyright: ignore[reportUnusedVariable]
 
     # ImportHelper mix-in class uses this.
-    filename_ext: str = ".gml"
+    filename_ext: str = ".gml"  # pyright: ignore[reportUnusedVariable]
 
     filter_glob: object = StringProperty (
         default="*.gml",
@@ -61,7 +62,7 @@ class ImportSomeData(Operator, ImportHelper):
 
 # Only needed if you want to add into a dynamic menu.
 def menu_func_import(self, context):
-    self.layout.operator(ImportSomeData.bl_idname, text="SWISSBuildings")
+    self.layout.operator(ImportSomeData.bl_idname, text="SWISSBuildings (.gml)")
 
 
 # Register and add to the "file selector" menu (required to use F3 search "Text Import Operator" for quick access).
