@@ -100,6 +100,7 @@ if __name__ == '__main__':
 
         has_progress = True
     except ImportError:
+        has_progress = False
         print(f"{ImportError}: progressing without.")
 
     parser = argparse.ArgumentParser(

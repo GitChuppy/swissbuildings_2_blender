@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
 
+from typing import cast, override
+
 import numpy as np
-from implicit_mapping import Implicit_Mapping
 from lxml import etree
 from numpy.typing import NDArray
+
+from implicit_mapping import Implicit_Mapping
 
 
 # classes
@@ -20,7 +23,9 @@ class Version:
         self.hotfix:    int = arr_version[2] if len(arr_version) > 2 else 0
         self._raw:      str = f"{self.major}.{self.minor}.{self.hotfix}"
 
-    def __lt__(self, other: Version) -> bool:
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return (
             self.major,
             self.minor,
@@ -30,7 +35,9 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __gt__(self, other: Version) -> bool:
+    def __gt__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return (
             self.major,
             self.minor,
@@ -40,12 +47,19 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __le__(self, other: Version) -> bool:
+    def __le__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return not(self.__gt__(other))
-    def __ge__(self, other: Version) -> bool:
+    def __ge__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
         return not(self.__lt__(other))
-    def __eq__(self, other: Version) -> bool:
-        return  (
+    @override
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Version):
+            return NotImplemented
+        return (
             self.major,
             self.minor,
             self.hotfix
@@ -54,7 +68,8 @@ class Version:
             other.minor,
             other.hotfix
         )
-    def __ne__(self, other: Version) -> bool:
+    @override
+    def __ne__(self, other: object) -> bool:
         return not(self.__eq__(other))
 
 # testing framework
@@ -114,7 +129,7 @@ class Building:
                 # --- Individual Coordinates ---
                 @property
                 def x(self) -> np.float32:
-                    return self._coords[0]
+                    return cast(np.float32, self._coords[0])
 
                 @x.setter
                 def x(self, value: np.float32) -> None:
@@ -122,7 +137,7 @@ class Building:
 
                 @property
                 def y(self) -> np.float32:
-                    return self._coords[1]
+                    return cast(np.float32, self._coords[1])
 
                 @y.setter
                 def y(self, value: np.float32) -> None:
@@ -130,7 +145,7 @@ class Building:
 
                 @property
                 def z(self) -> np.float32:
-                    return self._coords[2]
+                    return cast(np.float32, self._coords[2])
 
                 @z.setter
                 def z(self, value: np.float32) -> None:
@@ -173,7 +188,7 @@ class Building:
             vertex: list[Vertex]
             vertices: Implicit_Mapping[Vertex]
 
-            def __init__(self, polygon: etree._Element, ns: dict[str | None, str], version: Version, dimension: int = 3) -> None:
+            def __init__(self, polygon: str, ns: dict[str | None, str], version: Version, dimension: int = 3) -> None:
 
                 _arr_vertex_ring: np.ndarray = np.array(polygon.split(), dtype=np.float32)
 
@@ -185,13 +200,13 @@ class Building:
                     raise IndexError("Polygon need atleast 3 vertices")
                 elif _arr_vertex_ring[:dimension].all() != _arr_vertex_ring[-dimension:].all():
                     raise ValueError("The last vertex needs to be coinciding with the first vertex")
-                else:
-                    _arr_vertex_ring = _arr_vertex_ring.reshape((-1, dimension))
 
-                    self.vertex = [
-                        self.Vertex(version=version, vertices=np.asarray(vertices, dtype=np.float32))
-                        for vertices in _arr_vertex_ring[:-1]
-                    ]
+                _arr_vertex_ring = cast(NDArray[np.float32], _arr_vertex_ring.reshape((-1, dimension)))
+
+                self.vertex = [
+                    self.Vertex(version=version, vertices=np.asarray(vertices, dtype=np.float32))  # pyright: ignore[reportAny]
+                    for vertices in _arr_vertex_ring[:-1]  # pyright: ignore[reportAny]
+                ]
 
                 self.vertices = Implicit_Mapping(self.vertex)
 
@@ -200,12 +215,12 @@ class Building:
         face: dict[str, Polygon]
         faces: Implicit_Mapping[Polygon]
 
-        def __init__(self, surfaces: list[etree._Element], ns: dict[str | None, str], version: Version) -> None:
+        def __init__(self, surfaces: list[etree.ElementBase], ns: dict[str | None, str], version: Version) -> None:
 
             if Version("3.0") <= version:
                 self.face = {
-                            patch.attrib[nsl('gml:id', ns)]: self.Polygon(
-                                polygon=patch.find('.//' + nsl('gml:posList', ns)).text,
+                            cast(str, patch.attrib[nsl('gml:id', ns)]): self.Polygon(
+                                polygon=patch.findtext('.//' + nsl('gml:posList', ns), default=''),
                                 ns=ns,
                                 version=version
                             )
@@ -217,10 +232,12 @@ class Building:
             # end Surface
 
     component: dict[str, Surface]
+    components: Implicit_Mapping[Surface]
 
     bounding_box: AABB_BoundingBox
 
-    def __init__(self, building: etree._Element, ns: dict[str | None, str], version: Version) -> None:
+
+    def __init__(self, building: etree.ElementBase, ns: dict[str | None, str], version: Version) -> None:
 
         self.component = {}
         self.components = Implicit_Mapping(self.component)
@@ -228,9 +245,9 @@ class Building:
         if Version("3.0") <= version:
 
             for ground_type in ('GroundSurface', 'WallSurface', 'RoofSurface', 'lod2Solid'):
-                surface = building.findall('.//' + nsl(f"bldg:{ground_type}"   ,ns))
+                surface = building.findall('.//' + nsl(f"bldg:{ground_type}", ns))
                 if surface:
-                    self.component[ground_type] = self.Surface(surface, ns=ns, version=version)
+                    self.component[ground_type] = self.Surface(cast(list[etree.ElementBase], surface), ns=ns, version=version)
 
             vertices = np.asarray(self.components.faces.vertices.xyz.flatten(), dtype=np.float32).reshape((-1,3))
             self.bounding_box = AABB_BoundingBox(corner1=np.min(vertices, axis=0),
@@ -241,7 +258,7 @@ class Building:
 # end Building
 
 # functions
-def nsl(identifier: str, namespace: dict | None = None) -> str:
+def nsl(identifier: str, namespace: dict[str, str] | None = None) -> str:
     """
     Tiny helper function: lxml doesnt allow for the namespace resolution of indices / keys (see `.attrib[]` modifier).
     This function essentially emulates this, if only for a generic expression.
