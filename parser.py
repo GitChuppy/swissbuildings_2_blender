@@ -8,9 +8,12 @@ import numpy as np
 # etree is a compiled package that has no stubs shipped with it
 from lxml import etree
 
-from implicit_mapping import Implicit_Mapping
-from tooling import AABB_BoundingBox, Building, Version, nsl
-
+try:
+    from implicit_mapping import Implicit_Mapping
+    from tooling import AABB_BoundingBox, Building, Version, nsl
+except ImportError:
+    from .implicit_mapping import Implicit_Mapping
+    from .tooling import AABB_BoundingBox, Building, Version, nsl
 
 class SwissBUILDINGS3d_Parser:
     """

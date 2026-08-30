@@ -10,8 +10,12 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ImportHelper
 from numpy.typing import NDArray
 
-from parser import SwissBUILDINGS3d_Parser
-from tooling import Building
+try:
+    from parser import SwissBUILDINGS3d_Parser
+    from tooling import Building
+except ImportError:
+    from .parser import SwissBUILDINGS3d_Parser
+    from .tooling import Building
 
 # The building components imported as mesh objects: one mesh object per building and component.
 # Note that 'lod2Solid' is deliberately not imported; extend this tuple to add more.

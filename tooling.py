@@ -7,7 +7,10 @@ import numpy as np
 from lxml import etree
 from numpy.typing import NDArray
 
-from implicit_mapping import Implicit_Mapping
+try:
+    from implicit_mapping import Implicit_Mapping
+except ImportError:
+    from .implicit_mapping import Implicit_Mapping
 
 
 # classes
