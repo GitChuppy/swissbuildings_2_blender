@@ -83,7 +83,10 @@ class Version:
 
 class AABB_BoundingBox:
 
-    def __init__(self, corner1: NDArray[np.float32], corner2: NDArray[np.float32]) -> None:
+    def __init__(self, corner1: NDArray[np.float32] | None, corner2: NDArray[np.float32] | None) -> None:
+        if corner1 is None or corner2 is None:
+            raise OSError('malformed upper or lower corner in tiledata')
+
         self._corner1: NDArray[np.float32] = corner1
         self._corner2: NDArray[np.float32] = corner2
         self.update()
@@ -109,7 +112,6 @@ class AABB_BoundingBox:
     def corner2(self, value: NDArray[np.float32]):
         self._corner2 = value
         self.update()
-
 
 
 class Building:
@@ -188,7 +190,7 @@ class Building:
             vertex: list[Vertex]
             vertices: Implicit_Mapping[Vertex]
 
-            def __init__(self, polygon: str, ns: dict[str | None, str], version: Version, dimension: int = 3) -> None:
+            def __init__(self, polygon: str, ns: dict[str | None, str] | None, version: Version, dimension: int = 3) -> None:
 
                 _arr_vertex_ring: np.ndarray = np.array(polygon.split(), dtype=np.float32)
 
@@ -215,7 +217,7 @@ class Building:
         face: dict[str, Polygon]
         faces: Implicit_Mapping[Polygon]
 
-        def __init__(self, surfaces: list[etree.ElementBase], ns: dict[str | None, str], version: Version) -> None:
+        def __init__(self, surfaces: list[etree.ElementBase], ns: dict[str | None, str] | None, version: Version) -> None:
 
             if Version("3.0") <= version:
                 self.face = {
@@ -237,7 +239,7 @@ class Building:
     bounding_box: AABB_BoundingBox
 
 
-    def __init__(self, building: etree.ElementBase, ns: dict[str | None, str], version: Version) -> None:
+    def __init__(self, building: etree.ElementBase, ns: dict[str | None, str] | None, version: Version) -> None:
 
         self.component = {}
         self.components = Implicit_Mapping(self.component)
@@ -258,7 +260,7 @@ class Building:
 # end Building
 
 # functions
-def nsl(identifier: str, namespace: dict[str, str] | None = None) -> str:
+def nsl(identifier: str, namespace: dict[str | None, str] | None = None) -> str:
     """
     Tiny helper function: lxml doesnt allow for the namespace resolution of indices / keys (see `.attrib[]` modifier).
     This function essentially emulates this, if only for a generic expression.

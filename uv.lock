@@ -3,43 +3,32 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
-name = "blender-python-stubs"
-version = "5.1.0.3"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a0/2c/56cf551e0a86e898b6ee0f340c77876e29930ac8857b3d36e41023cbae9b/blender_python_stubs-5.1.0.3.tar.gz", hash = "sha256:5dbe84cb635dd858834b8befb797cd8a1a305836b4bca206a76fc5a866e93f3b", size = 672525, upload-time = "2026-05-12T15:02:21.398Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7a/cf/a4c6826ec11c4edd2854e2758691ced56c4db3cfaec50f442fcf9065b90b/blender_python_stubs-5.1.0.3-py3-none-any.whl", hash = "sha256:5ab8bfc378ba94daae3d849a5a5e1320dae9414090bdcc7725bf9920db0fcbde", size = 707131, upload-time = "2026-05-12T15:02:19.35Z" },
-]
-
-[[package]]
 name = "citygml"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "lxml" },
     { name = "numpy" },
-    { name = "pip" },
-    { name = "tqdm" },
 ]
 
 [package.dev-dependencies]
 dev = [
-    { name = "blender-python-stubs" },
     { name = "lxml-stubs" },
+    { name = "pip" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "lxml", specifier = ">=6.1.2" },
     { name = "numpy", specifier = ">=2.5.2" },
-    { name = "pip", specifier = ">=26.2.1" },
-    { name = "tqdm", specifier = ">=4.70.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "blender-python-stubs", specifier = ">=5.1.0.3" },
     { name = "lxml-stubs", specifier = ">=0.5.1" },
+    { name = "pip", specifier = ">=26.2.1" },
+    { name = "tqdm", specifier = ">=4.70.0" },
 ]
 
 [[package]]
