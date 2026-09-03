@@ -50,7 +50,7 @@ def _create_surface_mesh(
     parent: bpy.types.Object,
     name: str,
     surface: Building.Surface,
-    collection: bpy.types.Collection,
+    internal_collection: bpy.types.Collection,
 ) -> None:
     """
     Creates one mesh object holding the polygons of `surface`, built around 0,0,0 with bmesh,
@@ -61,10 +61,11 @@ def _create_surface_mesh(
         for face_id, polygon in surface.face.items():
             try:
                 verts = [bm.verts.new(tuple(float(c) for c in vertex.xyz)) for vertex in polygon.vertices]
-                bm.faces.new(verts)
+                _ = bm.faces.new(verts)
             except (ValueError, RuntimeError) as error:
-                print(f"Skipping surface patch '{face_id}' of '{name}': {error}")
+                raise ImportError(f"surface patch malformed '{face_id}' of '{name}': {error}")
         bm.normal_update()
+        bmesh.ops.remove_doubles(bm, verts = bm.verts, use_connected = False, dist=0.0)
         mesh = bpy.data.meshes.new(name)
         bm.to_mesh(mesh)
     finally:
@@ -75,7 +76,7 @@ def _create_surface_mesh(
         return
 
     obj = bpy.data.objects.new(name, mesh)
-    collection.objects.link(obj)
+    internal_collection.objects.link(obj)
     obj.parent = parent
 
 
@@ -126,7 +127,7 @@ def import_swissbuildings(context: bpy.types.Context, filepath: str) -> set[str]
                     parent=empty,
                     name=f"{building_id}_{surface_type}",
                     surface=surface,
-                    collection=building_collection,
+                    internal_collection=building_collection,
                 )
                 empty.location = tuple(float(c) for c in building.bounding_box.center)
                 meshes_created += 1
