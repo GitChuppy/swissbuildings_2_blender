@@ -64,8 +64,9 @@ def _create_surface_mesh(
                 _ = bm.faces.new(verts)
             except (ValueError, RuntimeError) as error:
                 raise ImportError(f"surface patch malformed '{face_id}' of '{name}': {error}")
-        bm.normal_update()
+
         bmesh.ops.remove_doubles(bm, verts = bm.verts, use_connected = False, dist=0.0)
+        bmesh.ops.recalc_face_normals(bm)
         mesh = bpy.data.meshes.new(name)
         bm.to_mesh(mesh)
     finally:
