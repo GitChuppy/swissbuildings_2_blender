@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import math
 import os
 
 import bmesh
@@ -51,10 +52,13 @@ def _create_surface_mesh(
     name: str,
     surface: Building.Surface,
     internal_collection: bpy.types.Collection,
+    angle: float = 30.0,
 ) -> None:
     """
     Creates one mesh object holding the polygons of `surface`, built around 0,0,0 with bmesh,
     then places the object at `center` inside `collection`.
+    All faces are smooth-shaded; edges whose angle between the adjacent faces is less than
+    `angle` degrees are marked sharp instead of separating the faces.
     """
     bm = bmesh.new()
     try:
@@ -65,8 +69,17 @@ def _create_surface_mesh(
             except (ValueError, RuntimeError) as error:
                 raise ImportError(f"surface patch malformed '{face_id}' of '{name}': {error}")
 
-        bmesh.ops.remove_doubles(bm, verts = bm.verts, use_connected = False, dist=0.0)
+        bmesh.ops.remove_doubles(bm, verts = bm.verts, use_connected=False, dist=0.0)
         bmesh.ops.recalc_face_normals(bm)
+        # Smooth-shade all faces (bmesh-level, avoids bpy.ops context overhead and undo dirtying).
+        for face in bm.faces:
+            face.smooth = True
+        # Mark edges with an angle below `angle` degrees as sharp edges; the faces stay connected.
+        limit = math.radians(angle)
+        for edge in bm.edges:
+            if len(edge.link_faces) == 2:
+                if edge.calc_face_angle() >= limit:
+                    edge.smooth = False
         mesh = bpy.data.meshes.new(name)
         bm.to_mesh(mesh)
     finally:
