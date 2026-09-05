@@ -13,3 +13,4 @@
 assets/*
 .zed/agent/*
 .venv
+tools/*

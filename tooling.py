@@ -85,34 +85,37 @@ class Version:
 #print(Version("2") < Version("0.9.9"))
 
 class AABB_BoundingBox:
+    # Coordinates stay float64 here: at LV95 magnitudes (~2.7e6 m) a float32
+    # only resolves ~25cm steps. Conversion to float32 happens at the very end
+    # (in Blender), once everything is relative to the tile center.
 
-    def __init__(self, corner1: NDArray[np.float32] | None, corner2: NDArray[np.float32] | None) -> None:
+    def __init__(self, corner1: NDArray[np.float64] | None, corner2: NDArray[np.float64] | None) -> None:
         if corner1 is None or corner2 is None:
             raise OSError('malformed upper or lower corner in tiledata')
 
-        self._corner1: NDArray[np.float32] = corner1
-        self._corner2: NDArray[np.float32] = corner2
+        self._corner1: NDArray[np.float64] = corner1
+        self._corner2: NDArray[np.float64] = corner2
         self.update()
 
     def update(self) -> None:
-        self.center: NDArray[np.float32] = (np.add(self._corner1, self._corner2)*0.5).astype(np.float32)
+        self.center: NDArray[np.float64] = np.add(self._corner1, self._corner2) * 0.5
 
     # getter and setters to make sure updating the AABB updates associated data
     @property
-    def corner1(self):
+    def corner1(self) -> NDArray[np.float64]:
         return self._corner1
 
     @corner1.setter
-    def corner1(self, value: NDArray[np.float32]):
+    def corner1(self, value: NDArray[np.float64]):
         self._corner1 = value
         self.update()
 
     @property
-    def corner2(self):
+    def corner2(self) -> NDArray[np.float64]:
         return self._corner2
 
     @corner2.setter
-    def corner2(self, value: NDArray[np.float32]):
+    def corner2(self, value: NDArray[np.float64]):
         self._corner2 = value
         self.update()
 
@@ -125,68 +128,68 @@ class Building:
 
             class Vertex:
 
-                def __init__(self, version: Version, vertices: NDArray[np.float32]) -> None:
+                def __init__(self, version: Version, vertices: NDArray[np.float64]) -> None:
 
                     if Version("3.0") <= version:
                         # Ensure we have exactly 3 coordinates, padding with 0.0 if necessary
-                        self._coords: NDArray[np.float32] = np.asarray((vertices + [0.0, 0.0, 0.0])[:3], dtype=np.float32)
+                        self._coords: NDArray[np.float64] = np.asarray((vertices + [0.0, 0.0, 0.0])[:3], dtype=np.float64)
 
                 # --- Individual Coordinates ---
                 @property
-                def x(self) -> np.float32:
-                    return cast(np.float32, self._coords[0])
+                def x(self) -> np.float64:
+                    return cast(np.float64, self._coords[0])
 
                 @x.setter
-                def x(self, value: np.float32) -> None:
+                def x(self, value: np.float64) -> None:
                     self._coords[0] = value
 
                 @property
-                def y(self) -> np.float32:
-                    return cast(np.float32, self._coords[1])
+                def y(self) -> np.float64:
+                    return cast(np.float64, self._coords[1])
 
                 @y.setter
-                def y(self, value: np.float32) -> None:
+                def y(self, value: np.float64) -> None:
                     self._coords[1] = value
 
                 @property
-                def z(self) -> np.float32:
-                    return cast(np.float32, self._coords[2])
+                def z(self) -> np.float64:
+                    return cast(np.float64, self._coords[2])
 
                 @z.setter
-                def z(self, value: np.float32) -> None:
+                def z(self, value: np.float64) -> None:
                     self._coords[2] = value
 
                 # --- Composed Coordinates (Bidirectional) ---
                 @property
-                def xy(self) -> NDArray[np.float32]:
-                    return np.asarray((self._coords[0], self._coords[1]), dtype=np.float32)
+                def xy(self) -> NDArray[np.float64]:
+                    return np.asarray((self._coords[0], self._coords[1]), dtype=np.float64)
 
                 @xy.setter
-                def xy(self, value: NDArray[np.float32]) -> None:
+                def xy(self, value: NDArray[np.float64]) -> None:
                     self._coords[0], self._coords[1] = value
 
                 @property
-                def yz(self) -> NDArray[np.float32]:
-                    return np.asarray((self._coords[1], self._coords[2]), dtype=np.float32)
+                def yz(self) -> NDArray[np.float64]:
+                    return np.asarray((self._coords[1], self._coords[2]), dtype=np.float64)
 
                 @yz.setter
-                def yz(self, value: NDArray[np.float32]) -> None:
+                def yz(self, value: NDArray[np.float64]) -> None:
                     self._coords[1], self._coords[2] = value
 
                 @property
-                def xz(self) -> NDArray[np.float32]:
-                    return np.asarray((self._coords[0], self._coords[2]), dtype=np.float32)
+                def xz(self) -> NDArray[np.float64]:
+                    return np.asarray((self._coords[0], self._coords[2]), dtype=np.float64)
 
                 @xz.setter
-                def xz(self, value: NDArray[np.float32]) -> None:
+                def xz(self, value: NDArray[np.float64]) -> None:
                     self._coords[0], self._coords[2] = value
 
                 @property
-                def xyz(self) -> NDArray[np.float32]:
-                    return np.asarray(self._coords, dtype=np.float32)
+                def xyz(self) -> NDArray[np.float64]:
+                    return np.asarray(self._coords, dtype=np.float64)
 
                 @xyz.setter
-                def xyz(self, value: NDArray[np.float32]) -> None:
+                def xyz(self, value: NDArray[np.float64]) -> None:
                     self._coords[:] = value # Update list in place
 
             # end Vertex
@@ -195,7 +198,7 @@ class Building:
 
             def __init__(self, polygon: str, ns: dict[str | None, str] | None, version: Version, dimension: int = 3) -> None:
 
-                _arr_vertex_ring: np.ndarray = np.array(polygon.split(), dtype=np.float32)
+                _arr_vertex_ring: np.ndarray = np.array(polygon.split(), dtype=np.float64)
 
                 # TODO: Add line position of XML document to error messages
                 len_arr_vertex_ring = len(_arr_vertex_ring)
@@ -206,10 +209,10 @@ class Building:
                 elif _arr_vertex_ring[:dimension].all() != _arr_vertex_ring[-dimension:].all():
                     raise ValueError("The last vertex needs to be coinciding with the first vertex")
 
-                _arr_vertex_ring = cast(NDArray[np.float32], _arr_vertex_ring.reshape((-1, dimension)))
+                _arr_vertex_ring = cast(NDArray[np.float64], _arr_vertex_ring.reshape((-1, dimension)))
 
                 self.vertex = [
-                    self.Vertex(version=version, vertices=np.asarray(vertices, dtype=np.float32))  # pyright: ignore[reportAny]
+                    self.Vertex(version=version, vertices=np.asarray(vertices, dtype=np.float64))  # pyright: ignore[reportAny]
                     for vertices in _arr_vertex_ring[:-1]  # pyright: ignore[reportAny]
                 ]
 
@@ -254,7 +257,7 @@ class Building:
                 if surface:
                     self.component[ground_type] = self.Surface(cast(list[etree.ElementBase], surface), ns=ns, version=version)
 
-            vertices = np.asarray(self.components.faces.vertices.xyz.flatten(), dtype=np.float32).reshape((-1,3))
+            vertices = np.asarray(self.components.faces.vertices.xyz.flatten(), dtype=np.float64).reshape((-1,3))
             self.bounding_box = AABB_BoundingBox(corner1=np.min(vertices, axis=0),
                                                  corner2=np.max(vertices, axis=0))
 

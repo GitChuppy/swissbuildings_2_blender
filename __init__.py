@@ -2,6 +2,9 @@
 
 import math
 import os
+import zipfile
+from contextlib import contextmanager
+from typing import Any
 
 import bmesh
 import bpy
@@ -94,19 +97,72 @@ def _create_surface_mesh(
     obj.parent = parent
 
 
+@contextmanager
+def _gml_source(filepath: str):
+    """
+    Opens the GML content behind `filepath`, fully in memory: plain files pass through
+    as a path, zip archives are read from their single .gml member (decompressed in
+    RAM, nothing is written to disk).
+    TODO(perf): eventually stream the parsed coordinates straight into GPU buffers
+    (VRAM), skipping the CPU-resident float64 tree and the bmesh round-trip.
+    """
+    if not zipfile.is_zipfile(filepath):
+        yield filepath
+        return
+    with zipfile.ZipFile(filepath) as archive:
+        members = [name for name in archive.namelist() if name.lower().endswith(".gml")]
+        if len(members) != 1:
+            raise ValueError(f"Expected exactly one .gml file in zip '{filepath}', found {len(members)}.")
+        yield archive.open(members[0])
+
+
 def import_swissbuildings(context: bpy.types.Context, filepath: str) -> set[str]:
     """
     Imports the SWISSBuildings citygml file at `filepath` into the scene:
     one root collection (named after the file) containing one collection per building,
     each with a separate mesh object for its wall, roof and ground surfaces.
     Importing the same file again replaces the contents of the previous root collection.
+    `filepath` may be a plain .gml file or a .zip archive containing a single .gml
+    file; the archive is decompressed in RAM, nothing is written to disk.
+
+    Geometry is placed relative to the tile's bounding-box center instead of raw LV95
+    coordinates: Blender stores meshes and object transforms in float32, which at LV95
+    magnitudes (~2.7e6 m) only resolves ~10-25cm steps. Relative to the tile center the
+    same values keep sub-millimeter precision.
+    Only x/y are shifted this way; z keeps its absolute LV95 height so all imported
+    tiles share the same height datum.
     """
-    data = SwissBUILDINGS3d_Parser(False, filepath)
-    data.parseBuildings()
+    with _gml_source(filepath) as source:
+        data = SwissBUILDINGS3d_Parser(False, source)
+        data.parseBuildings()
 
     buildings: dict[str, Building] | None = getattr(data, "building", None)
     if not buildings:
         raise ValueError(f"No buildings found in '{filepath}' (requires dataset version >= 3.0).")
+
+    tiledata: dict[str, Any] | None = getattr(data, "tiledata", None)  # pyright: ignore[reportExplicitAny]
+    if tiledata is None:
+        raise ValueError(f"No tile bounding box found in '{filepath}' (requires dataset version >= 3.0).")
+    tile_center = np.asarray(tiledata["bounding_Box"].center, dtype=np.float64)
+
+    # Only the horizontal (x/y) position is corrected for the tile offset; height is kept
+    # absolute: the envelope's z range is just this tile's min/max height, not a datum, so
+    # subtracting it would sink the tile to an arbitrary height. Keeping z absolute means
+    # every tile shares the LV95 height system (m above HÖH).
+    tile_origin = np.asarray([tile_center[0], tile_center[1], 0.0], dtype=np.float64)
+
+    # The first tile imported into this scene defines the world origin: the ground point
+    # below its bounding-box center maps to (0, 0, 0). Later tiles are offset by the same
+    # anchor (each from its own bounding box), so multiple tiles land in their correct
+    # relative position.
+    # To re-anchor the scene on a different tile, delete context.scene["swissbuildings_world_origin"]
+    # and import that tile.
+    world_origin: NDArray[np.float64] = context.scene.get("swissbuildings_world_origin")
+    if world_origin is None:
+        world_origin = tile_origin
+        context.scene["swissbuildings_world_origin"] = list(world_origin)
+    else:
+        world_origin = np.asarray(world_origin, dtype=np.float64)
 
     root_collection = _child_collection(
         context.scene.collection,
@@ -143,7 +199,9 @@ def import_swissbuildings(context: bpy.types.Context, filepath: str) -> set[str]
                     surface=surface,
                     internal_collection=building_collection,
                 )
-                empty.location = tuple(float(c) for c in building.bounding_box.center)
+                # Absolute LV95 building center, shifted in x/y so the tile center sits at the
+                # world origin; z keeps the absolute height.
+                empty.location = tuple(float(c) for c in (building.bounding_box.center - world_origin))
                 meshes_created += 1
                 window_manager.progress_update(meshes_created)
     finally:
@@ -164,7 +222,7 @@ class ImportSwissBuildings(Operator, ImportHelper):
     filename_ext: str = ".gml"  # pyright: ignore[reportUnusedVariable]
 
     filter_glob: object = StringProperty(
-        default="*.gml",
+        default="*.gml;*.zip",
         options={'HIDDEN'},
         maxlen=255,  # Max internal buffer length, longer would be clamped.
     )

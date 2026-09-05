@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from time import perf_counter as pfc
-from typing import Any, cast
+from typing import IO, Any, cast
 
 import numpy as np
 
@@ -20,15 +20,16 @@ class SwissBUILDINGS3d_Parser:
     Parser Implementation for the SWISSBuildings3D dataset of swisstopo as an intermediate to blender
     """
 
-    def __init__(self, _has_progress: bool, filepath: str) -> None:
+    def __init__(self, _has_progress: bool, filepath: str | IO[bytes]) -> None:
         """
         Parses metadata and as a next step all the further data
         `Args`:
             - _has_progress:
                 internal argument whether the system has tqdm available or not
             - filepath:
-                A path to a citygml `.gml` file.
-                May be absolute OR relative.
+                A path to a citygml `.gml` file (may be absolute OR relative),
+                or an open binary file-like object with the same content (e.g. a
+                member of a zip archive), which is read fully during this call.
                 Python filepath restrictions persist, spaces in paths may cause an error.
         """
         version: dict[str, Version]
@@ -65,16 +66,19 @@ class SwissBUILDINGS3d_Parser:
                                             )
                                         if _set_info is not None else ''
                                         ),
+                # float64: the envelope corners are LV95 magnitudes (~2.7e6 m), where a
+                # float32 only resolves ~25cm steps. The tile center derived from them
+                # becomes the world origin, so it must keep full precision.
                 "lower_corner"      :   (_lower_corner := (
                                             np.asarray(
                                                 _set_info.findtext(nsl('gml:lowerCorner', ns), default='')
-                                                    .split(' '), dtype=np.float32
+                                                    .split(' '), dtype=np.float64
                                                 ) if _set_info is not None else None
                                         )),
                 "upper_corner"      :   (_upper_corner := (
                                             np.asarray(
                                                 _set_info.findtext(nsl('gml:upperCorner', ns), default='')
-                                                    .split(' '), dtype=np.float32
+                                                    .split(' '), dtype=np.float64
                                                 ) if _set_info is not None else None
                                         )),
                 "bounding_Box"      :   AABB_BoundingBox(_lower_corner, _upper_corner)
