@@ -2,7 +2,7 @@
 
 [![blender](https://img.shields.io/badge/Blender-5.2%20LTS-F5792C?logo=blender&logoColor=white)](https://www.blender.org/)
 [![python](https://img.shields.io/badge/Python-3.14%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![license](https://img.shields.io/badge/license-GPLv3-4CAF50)](LICENSE)
+[![license](https://img.shields.io/badge/license-GPLv3-4CAF50)](LICENSE.md)
 [![lxml](https://img.shields.io/badge/parsers-lxml-8C1515?logo=libxml2&logoColor=white)](https://pypi.org/project/lxml/)
 [![made with](https://img.shields.io/badge/made_with-AI%20%2B%20human-6F42C1?logo=git&logoColor=white)](#credits)
 
