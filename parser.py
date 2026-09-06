@@ -103,11 +103,13 @@ class SwissBUILDINGS3d_Parser:
                 buildings, pfc()
             )
 
-            self.building = {
-                cast(str, _.find(nsl('bldg:Building', ns)).attrib[nsl('gml:id', ns)]) :  # pyright: ignore[reportOptionalMemberAccess]
-                    Building(building=cast(etree.ElementBase, _), ns=ns, version=version["swisstopo"]) # pass object and namespace, generate all the surface patches data inside the class...
-                for _ in source
-            }
+            self.building = {}
+            for _ in source:
+                building = _.find(nsl('bldg:Building', ns))
+                if building is not None:
+                    self.building[str(building.attrib[nsl('gml:id', ns)])] = Building(
+                        building=cast(etree.ElementBase, _), ns=ns, version=version["swisstopo"]
+                    )
 
             print(f"Mapping done in {pfc()-start}s") if start else None
             self.buildings = Implicit_Mapping(self.building)

@@ -202,6 +202,7 @@ def import_swissbuildings(context: bpy.types.Context, filepath: str) -> set[str]
                 # Absolute LV95 building center, shifted in x/y so the tile center sits at the
                 # world origin; z keeps the absolute height.
                 empty.location = tuple(float(c) for c in (building.bounding_box.center - world_origin))
+                empty.show_in_front = True
                 meshes_created += 1
                 window_manager.progress_update(meshes_created)
     finally:
