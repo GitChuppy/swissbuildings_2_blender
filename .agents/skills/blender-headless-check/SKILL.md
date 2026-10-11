@@ -93,9 +93,8 @@ For each file it imports and reports:
   touch it.)
 - The parser accepts a **file-like object**, so the zip path works by passing
   `zipfile.ZipFile(...).open(member)` straight in — nothing is written to disk.
-- **RAM**: the big multitiles (REDACTED,
-  REDACTED) are the slow/heavy ones. This box
-  has 15 GB total; a single tile import is fine, but don't import both big
+- **RAM**: big multitiles (REDACTED,
+  REDACTED) are the slow/heavy ones. Your box may have 15 GB total; a single tile import is fine, but don't import both big
   tiles in one run if memory is tight.
 - The harness prints `RESULT: PASS` even when it fell back to parser-only mode
   — check the line that says `bpy available = True/False` to know which path
