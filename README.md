@@ -47,7 +47,7 @@ Most CityGML workflows drag in a large, general-purpose import stack. This add-o
 
 ## Installation
 
-### From the Blender Extensions platform *(recommended)*
+### From the Blender Extensions platform *(not yet available)*
 
 1. In Blender, go to **Edit → Preferences → Get Extensions**.
 2. Search for **Swisstopo SWISSBuildings Importer**.
