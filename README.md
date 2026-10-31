@@ -11,7 +11,7 @@
 A lean Blender add-on that imports [Swisstopo SWISSBuildings 3D](https://shop.swisstopo.ch/) tiles (CityGML, dataset version ≥ 3.0) straight into your scene — no heavyweight CityGML pipeline, no external services, no plugins beyond the standard Blender Python API.
 
 ![Overview](docs/images/overview.png)
-*Imported `demo_Hinterrhein.gml` tile — one collection per building, with separate wall / roof / ground surface meshes.*
+*Imported `Basel.zip` tile — one collection per building, with separate wall / roof / ground surface meshes.*
 
 ![Top-down](docs/images/top.png)
 *Same tile, top-down: the per-building footprint layout as it comes off the import.*
